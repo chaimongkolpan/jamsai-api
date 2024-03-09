@@ -1,0 +1,20 @@
+{
+  "name": "jamsai-backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "node src/index.js",
+    "start": "node src/index.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@fastify/formbody": "^7.4.0",
+    "@fastify/multipart": "^8.1.0",
+    "axios": "^1.6.7",
+    "dotenv": "^16.4.5",
+    "fastify": "^4.26.2"
+  }
+}
