@@ -1,9 +1,14 @@
 const fastify = require("fastify")({ logger: true });
+const cors = require("@fastify/cors");
 const routes = require("./routers/index.js");
 
 require("dotenv").config();
 
+const corsConf = {
+  origin: true,
+};
 (async () => {
+  fastify.register(cors, corsConf);
   fastify.register(require('@fastify/multipart'), {
     limits: {
       fileSize: 1024 * 1024 * 1024,
