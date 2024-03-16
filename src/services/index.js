@@ -9,14 +9,20 @@ const prisma = new PrismaClient();
 
 require("dotenv").config();
 
-const BUCKET = process.env.AWS_S3_BUCKET;
-const PATH = process.env.AWS_S3_PATH;
 const EVENT_TYPE = process.env.JAMSAI_EVENT_TYPE;
 const SOURCE = process.env.JAMSAI_SOURCE;
-const REF_ID_PREFIX = process.env.AWS_S3_PATH;
+const REF_ID_PREFIX = process.env.JAMSAI_SOURCE_REF_ID;
+const BUCKET = process.env.AWS_S3_BUCKET;
+const PATH = process.env.AWS_S3_PATH;
 const s3 = new AWS.S3({
     accessKeyId: process.env.AWS_S3_ACCESS_KEY_ID,
-    secretAccessKey: process.env.JAMSAI_SOURCE_REF_ID,
+    secretAccessKey: process.env.AWS_S3_SECRET_ACCESS_KEY,
+});
+const BUCKET_ANSWER = process.env.AWS_S3_ANSWER_BUCKET;
+const PATH_ANSWER = process.env.AWS_S3_ANSWER_PATH;
+const s3_ANSWER = new AWS.S3({
+    accessKeyId: process.env.AWS_S3_ANSWER_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_S3_ANSWER_SECRET_ACCESS_KEY,
 });
 
 const Login = async (req) => {
@@ -471,19 +477,21 @@ const SubmitAnswer = async (req) => {
   try {
     const { jamsai_id, answers } = req.body;
     const result = CalculateBenefit(answers);
+    const data = {
+        jamsai_id: jamsai_id,
+        answers: JSON.stringify(answers),
+        created_at: new Date(),
+    }
     if (jamsai_id) {
         const existAnswer = await prisma.book_fair_event_answers.findMany({
             where: {
-            jamsai_id: jamsai_id
+                jamsai_id: jamsai_id
             },
         });
         await prisma.book_fair_event_answers.create({
-            data: {
-                jamsai_id: jamsai_id,
-                answers: JSON.stringify(answers),
-                created_at: new Date(),
-            },
+            data: data,
         });
+        await CreateHeartCsv(data);
         return {
             isSuccess: true,
             status_code: 200,
@@ -493,7 +501,11 @@ const SubmitAnswer = async (req) => {
                 is_earn: (existAnswer && existAnswer.length > 0)
             }
         };
-    } else return {
+    } else {
+        await prisma.book_fair_event_answers.create({
+            data: data,
+        });
+        return {
             isSuccess: true,
             status_code: 200,
             message: "Success",
@@ -502,6 +514,7 @@ const SubmitAnswer = async (req) => {
                 is_earn: false
             }
         };
+    }
   } catch (err) {
     console.log("Error Submit answer:", err);
     return {
@@ -564,7 +577,6 @@ const UploadAnswers = async () => {
             },
         });
         await CreateAnswerCsv(answers);
-        await CreateHeartCsv(answers);
         await prisma.book_fair_event_answers.updateMany({
             where: {
                 upload_s3_at: null,
@@ -620,13 +632,13 @@ const CreateAnswerCsv = async (answers) => {
         csvWriter.writeRecords(data)
         .then(() => {
             const fileContent = fs.readFileSync('output.csv');
-            const key = `${PATH}/kiosk_answers_${new Date().getTime()}.csv`
+            const key = `${PATH_ANSWER}/kiosk_answers_${new Date().getTime()}.csv`
             const putObjectCommand = {
-                Bucket: BUCKET, 
+                Bucket: BUCKET_ANSWER, 
                 Key: key,
                 Body: fileContent,
             };
-            s3.upload(putObjectCommand, function (err, data) {
+            s3_ANSWER.upload(putObjectCommand, function (err, data) {
                 fs.unlink('output.csv', (err) => {
                     if (err) {
                       console.error('Error deleting file:', err);
@@ -651,23 +663,17 @@ const CreateAnswerCsv = async (answers) => {
         return null;
     }
 };
-const CreateHeartCsv = async (answers) => {
+const CreateHeartCsv = async (element) => {
     try {
-        let data = [];
-        for(var element of answers){
-            data = [
-                ...data,
-                {
-                    id: element.jamsai_id.toString(), 
-                    event_type: EVENT_TYPE, 
-                    source: SOURCE, 
-                    ref_id: REF_ID_PREFIX + element.created_at.getTime().toString(),
-                    timestamp: ConvertDatetimeFormat(element.created_at)
-                }
-            ]
-        }
+        const data = [{
+            id: element.jamsai_id.toString(), 
+            event_type: EVENT_TYPE, 
+            source: SOURCE, 
+            ref_id: REF_ID_PREFIX + element.created_at.getTime().toString(),
+            timestamp: ConvertDatetimeFormat(element.created_at)
+        }];
         const csvWriter = createObjectCsvWriter({
-            path: 'output.csv',
+            path: 'output1.csv',
             header: [
               { id: 'timestamp', title: 'CREATED_AT' },
               { id: 'id', title: 'JAMSAI_ID' },
@@ -678,7 +684,7 @@ const CreateHeartCsv = async (answers) => {
         });
         csvWriter.writeRecords(data)
         .then(() => {
-            const fileContent = fs.readFileSync('output.csv');
+            const fileContent = fs.readFileSync('output1.csv');
             const key = `${PATH}/kiosk_${new Date().getTime()}.csv`
             const putObjectCommand = {
                 Bucket: BUCKET, 
