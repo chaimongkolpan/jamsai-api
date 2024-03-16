@@ -576,8 +576,7 @@ const UploadAnswers = async () => {
         return {
             isSuccess: true,
             status_code: 200,
-            message: "Success",
-            data: file
+            message: "Success"
         };
     } catch (err) {
         console.log("Error Submit answer:", err);
