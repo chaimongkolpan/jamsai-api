@@ -1,0 +1,17 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model book_fair_event_answers {
+  id              BigInt    @id(map: "book_fair_event_answers_pk") @default(autoincrement())
+  jamsai_id       Int?
+  answers         String?   @db.VarChar
+  created_at      DateTime? @db.Timestamp(6)
+  upload_s3_at    DateTime? @db.Timestamp(6)
+  upload_heart_at DateTime? @db.Timestamp(6)
+}

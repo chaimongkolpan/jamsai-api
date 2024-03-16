@@ -1,5 +1,24 @@
 const axios = require('axios');
+const AWS = require('aws-sdk');
+const csv = require('csv');
+const assert = require('node:assert');
+const fs = require('fs');
+const { createObjectCsvWriter } = require('csv-writer');
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
+
 require("dotenv").config();
+
+const BUCKET = process.env.AWS_S3_BUCKET;
+const PATH = process.env.AWS_S3_PATH;
+const EVENT_TYPE = process.env.JAMSAI_EVENT_TYPE;
+const SOURCE = process.env.JAMSAI_SOURCE;
+const REF_ID_PREFIX = process.env.AWS_S3_PATH;
+const s3 = new AWS.S3({
+    accessKeyId: process.env.AWS_S3_ACCESS_KEY_ID,
+    secretAccessKey: process.env.JAMSAI_SOURCE_REF_ID,
+});
+
 const Login = async (req) => {
   try {
     const { user_id } = req.body;
@@ -450,20 +469,39 @@ const GetQuestion = async (req) => {
 };
 const SubmitAnswer = async (req) => {
   try {
-    // check update heart
-    // if true update heart
-    // save answer
-    // random reward
-    return {
-        isSuccess: true,
-        status_code: 200,
-        message: "Success",
-        data: {
-            image: '',
-            qr: '',
-            is_earn_heart: false
-        }
-    };
+    const { jamsai_id, answers } = req.body;
+    const result = CalculateBenefit(answers);
+    if (jamsai_id) {
+        const existAnswer = await prisma.book_fair_event_answers.findMany({
+            where: {
+            jamsai_id: jamsai_id
+            },
+        });
+        await prisma.book_fair_event_answers.create({
+            data: {
+                jamsai_id: jamsai_id,
+                answers: JSON.stringify(answers),
+                created_at: new Date(),
+            },
+        });
+        return {
+            isSuccess: true,
+            status_code: 200,
+            message: "Success",
+            data: {
+                reward_id: result,
+                is_earn: (existAnswer && existAnswer.length > 0)
+            }
+        };
+    } else return {
+            isSuccess: true,
+            status_code: 200,
+            message: "Success",
+            data: {
+                reward_id: result,
+                is_earn: false
+            }
+        };
   } catch (err) {
     console.log("Error Submit answer:", err);
     return {
@@ -473,9 +511,217 @@ const SubmitAnswer = async (req) => {
     };
   }
 };
-
+const CalculateBenefit = (answers) => {
+    if (answers && answers.length > 2) {
+        if (answers[0] == 1) {
+            if (answers[1] == 1) {
+                return 1;
+            } else if (answers[1] == 2) {
+                return 2;
+            } else if (answers[1] == 3) {
+                return 3;
+            } else if (answers[1] == 4) {
+                return 4;
+            } else return 1;
+        } else if (answers[0] == 2) {
+            if (answers[1] == 1) {
+                return 5;
+            } else if (answers[1] == 2) {
+                return 6;
+            } else if (answers[1] == 3) {
+                return 7;
+            } else if (answers[1] == 4) {
+                return 8;
+            } else return 1;
+        } else if (answers[0] == 3) {
+            if (answers[1] == 1) {
+                return 9;
+            } else if (answers[1] == 2) {
+                return 10;
+            } else if (answers[1] == 3) {
+                return 11;
+            } else if (answers[1] == 4) {
+                return 12;
+            } else return 1;
+        } else if (answers[0] == 4) {
+            if (answers[1] == 1) {
+                return 13;
+            } else if (answers[1] == 2) {
+                return 14;
+            } else if (answers[1] == 3) {
+                return 15;
+            } else if (answers[1] == 4) {
+                return 16;
+            } else return 1;
+        } else return 1;
+    } else return 1;
+};
+const UploadAnswers = async () => {
+    try {
+        const answers = await prisma.book_fair_event_answers.findMany({
+            where: {
+                upload_s3_at: null
+            },
+        });
+        await CreateAnswerCsv(answers);
+        await CreateHeartCsv(answers);
+        await prisma.book_fair_event_answers.updateMany({
+            where: {
+                upload_s3_at: null,
+            },
+            data: {
+                upload_s3_at: new Date(),
+            },
+        });
+        return {
+            isSuccess: true,
+            status_code: 200,
+            message: "Success",
+            data: file
+        };
+    } catch (err) {
+        console.log("Error Submit answer:", err);
+        return {
+          isSuccess: false,
+          status_code: 400,
+          message: "An error occurred while submit answer",
+        };
+    }
+};
+const CreateAnswerCsv = async (answers) => {
+    try {
+        let data = [];
+        for(var element of answers){
+            const ans = JSON.parse(element.answers)
+            if (ans && ans.length == 4) {
+                data = [
+                    ...data,
+                    {
+                        id: element.jamsai_id.toString(), 
+                        q1: ans[0], 
+                        q2: ans[1], 
+                        q3: ans[2], 
+                        q4: ans[3], 
+                        timestamp: ConvertDatetimeFormat(element.created_at)
+                    }
+                ]
+            }
+        }
+        const csvWriter = createObjectCsvWriter({
+            path: 'output.csv',
+            header: [
+              { id: 'id', title: 'Jamsai ID' },
+              { id: 'q1', title: 'Q1' },
+              { id: 'q2', title: 'Q2' },
+              { id: 'q3', title: 'Q3' },
+              { id: 'q4', title: 'Q4' },
+              { id: 'timestamp', title: 'Timestamp' }
+            ]
+        });
+        csvWriter.writeRecords(data)
+        .then(() => {
+            const fileContent = fs.readFileSync('output.csv');
+            const key = `${PATH}/kiosk_answers_${new Date().getTime()}.csv`
+            const putObjectCommand = {
+                Bucket: BUCKET, 
+                Key: key,
+                Body: fileContent,
+            };
+            s3.upload(putObjectCommand, function (err, data) {
+                fs.unlink('output.csv', (err) => {
+                    if (err) {
+                      console.error('Error deleting file:', err);
+                      return;
+                    }
+                    console.log('File deleted successfully');
+                });
+                if (err) {
+                    return err;
+                }
+                if (data) {
+                    return true;
+                }
+            });
+        })
+        .catch(err => {
+            console.error('Error writing CSV file:', err);
+            return null;
+        });
+    } catch (err) {
+        console.log("Error Submit answer:", err);
+        return null;
+    }
+};
+const CreateHeartCsv = async (answers) => {
+    try {
+        let data = [];
+        for(var element of answers){
+            data = [
+                ...data,
+                {
+                    id: element.jamsai_id.toString(), 
+                    event_type: EVENT_TYPE, 
+                    source: SOURCE, 
+                    ref_id: REF_ID_PREFIX + element.created_at.getTime().toString(),
+                    timestamp: ConvertDatetimeFormat(element.created_at)
+                }
+            ]
+        }
+        const csvWriter = createObjectCsvWriter({
+            path: 'output.csv',
+            header: [
+              { id: 'timestamp', title: 'CREATED_AT' },
+              { id: 'id', title: 'JAMSAI_ID' },
+              { id: 'event_type', title: 'EVENT_TYPE' },
+              { id: 'source', title: 'SOURCE' },
+              { id: 'ref_id', title: 'SOURCE_REF_ID' }
+            ]
+        });
+        csvWriter.writeRecords(data)
+        .then(() => {
+            const fileContent = fs.readFileSync('output.csv');
+            const key = `${PATH}/kiosk_${new Date().getTime()}.csv`
+            const putObjectCommand = {
+                Bucket: BUCKET, 
+                Key: key,
+                Body: fileContent,
+            };
+            s3.upload(putObjectCommand, function (err, data) {
+                fs.unlink('output.csv', (err) => {
+                    if (err) {
+                      console.error('Error deleting file:', err);
+                      return;
+                    }
+                    console.log('File deleted successfully');
+                });
+                if (err) {
+                    return err;
+                }
+                if (data) {
+                    return true;
+                }
+            });
+        })
+        .catch(err => {
+            console.error('Error writing CSV file:', err);
+            return null;
+        });
+    } catch (err) {
+        console.log("Error Submit answer:", err);
+        return null;
+    }
+};
+const ConvertDatetimeFormat = (dat) => {
+    return ('0' + dat.getDate()).slice(-2) + '/'
+    + ('0' + (dat.getMonth() + 1)).slice(-2) + '/'
+    + dat.getFullYear() + ' '
+    + ('0' + dat.getHours()).slice(-2) + ':'
+    + ('0' + dat.getMinutes()).slice(-2) + ':'
+    + ('0' + dat.getSeconds()).slice(-2)
+}
 module.exports = {
     Login,
     GetQuestion,
-    SubmitAnswer
+    SubmitAnswer,
+    UploadAnswers
 };
