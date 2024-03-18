@@ -692,7 +692,7 @@ const CreateHeartCsv = async (element) => {
                 Body: fileContent,
             };
             s3.upload(putObjectCommand, function (err, data) {
-                fs.unlink('output.csv', (err) => {
+                fs.unlink('output1.csv', (err) => {
                     if (err) {
                       console.error('Error deleting file:', err);
                       return;
