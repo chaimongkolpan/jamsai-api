@@ -13,7 +13,7 @@ const rootRoute = async (app) => {
   app.get('/download/:id', function(req, res){
     const file = `public/Reward/Reward${req.params.id ?? 1}.webp`;
     const stream = require('fs').createReadStream(file);
-    res.header('Content-Disposition', 'attachment; filename=' + file);
+    res.header('Content-Disposition', 'attachment; filename=Reward' + id + '.jpg');
     res.send(stream).type('image/jpeg').code(200);
   });
 };
