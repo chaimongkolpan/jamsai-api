@@ -1,19 +1,47 @@
-/**
- * Import function triggers from their respective submodules:
- *
- * const {onCall} = require("firebase-functions/v2/https");
- * const {onDocumentWritten} = require("firebase-functions/v2/firestore");
- *
- * See a full list of supported triggers at https://firebase.google.com/docs/functions
- */
+const functions = require("firebase-functions");
+const {
+  Login,
+  GetQuestion,
+  SubmitAnswer,
+  UploadAnswerS3,
+} = require("./src/controllers");
+const services = require("./src/services");
+const cron = require("node-cron");
+const express = require("express");
+const app = express();
+var bodyParser = require("body-parser");
+var cors = require('cors')
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
 
-const {onRequest} = require("firebase-functions/v2/https");
-const logger = require("firebase-functions/logger");
+require("dotenv").config();
 
-// Create and deploy your first functions
-// https://firebase.google.com/docs/functions/get-started
+app.use(cors())
 
-// exports.helloWorld = onRequest((request, response) => {
-//   logger.info("Hello logs!", {structuredData: true});
-//   response.send("Hello from Firebase!");
-// });
+var task = cron.schedule("50 23 * * *", async () => {
+  try {
+    const result = await services.UploadAnswers();
+    if (result.isSuccess) {
+      console.log("Upload Success");
+    } else {
+      console.error("Upload Failed");
+    }
+  } catch (error) {
+    console.error("An error occurred while submit answer.", error);
+  }
+});
+
+const port = process.env.FUNCTION_PORT || 3001;
+
+app.get("/", (req, res) => {
+  res.send(`Api is running.`);
+});
+app.post("/login", Login);
+app.get("/questions", GetQuestion);
+app.post("/submit-answer", SubmitAnswer);
+app.get("/uploadS3", UploadAnswerS3);
+
+// Define your Cloud Function using the Express app
+const api = functions.https.onRequest(app);
+
+module.exports = { api };
