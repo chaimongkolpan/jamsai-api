@@ -476,7 +476,7 @@ const GetQuestion = async (req) => {
 const SubmitAnswer = async (req) => {
   try {
     const { jamsai_id, answers } = req.body;
-    const id = jamsai_id && (typeof jamsai_id == 'string') ? parseInt(jamsai_id) : jamsai_id
+    const id = jamsai_id && (typeof jamsai_id == 'string') ? BigInt(jamsai_id) : jamsai_id
     const result = CalculateBenefit(answers);
     const data = {
         jamsai_id: id,
@@ -528,51 +528,50 @@ const SubmitAnswer = async (req) => {
 const CalculateBenefit = (answers) => {
     if (answers && answers.length > 3) {
         if (answers[0] == 1 || answers[0] == '1') {
-            if (answers[2] == 1 || answers[0] == '1') {
+            if (answers[2] == 1 || answers[2] == '1') {
                 return 12;
-            } else if (answers[2] == 2 || answers[0] == '2') {
+            } else if (answers[2] == 2 || answers[2] == '2') {
                 return RandomData([10, 9]);
-            } else if (answers[2] == 3 || answers[0] == '3') {
+            } else if (answers[2] == 3 || answers[2] == '3') {
                 return 13;
-            } else if (answers[2] == 4 || answers[0] == '4') {
+            } else if (answers[2] == 4 || answers[2] == '4') {
                 return 11;
             } else return 12;
-        } else if (answers[0] == 4 || answers[0] == '4') {
-            if (answers[2] == 1 || answers[0] == '1') {
+        } else if (answers[0] == 3 || answers[0] == '3') {
+            if (answers[2] == 1 || answers[2] == '1') {
                 return 6;
-            } else if (answers[2] == 2 || answers[0] == '2') {
+            } else if (answers[2] == 2 || answers[2] == '2') {
                 return 7;
-            } else if (answers[2] == 3 || answers[0] == '3') {
+            } else if (answers[2] == 3 || answers[2] == '3') {
                 return 8;
-            } else if (answers[2] == 4 || answers[0] == '4') {
+            } else if (answers[2] == 4 || answers[2] == '4') {
                 return RandomData([6, 7]);
             } else return 6;
-        } else if (answers[0] == 3 || answers[0] == '3') {
-            if (answers[2] == 1 || answers[0] == '1') {
+        } else if (answers[0] == 4 || answers[0] == '4') {
+            if (answers[2] == 1 || answers[2] == '1') {
                 return 14;
-            } else if (answers[2] == 2 || answers[0] == '2') {
+            } else if (answers[2] == 2 || answers[2] == '2') {
                 return 15;
-            } else if (answers[2] == 3 || answers[0] == '3') {
+            } else if (answers[2] == 3 || answers[2] == '3') {
                 return 15;
-            } else if (answers[2] == 4 || answers[0] == '4') {
+            } else if (answers[2] == 4 || answers[2] == '4') {
                 return 14;
             } else return 14;
         } else if (answers[0] == 2 || answers[0] == '2') {
-            if (answers[2] == 1 || answers[0] == '1') {
+            if (answers[2] == 1 || answers[2] == '1') {
                 return RandomData([3, 5]);
-            } else if (answers[2] == 2 || answers[0] == '2') {
+            } else if (answers[2] == 2 || answers[2] == '2') {
                 return 4;
-            } else if (answers[2] == 3 || answers[0] == '3') {
+            } else if (answers[2] == 3 || answers[2] == '3') {
                 return 2;
-            } else if (answers[2] == 4 || answers[0] == '4') {
+            } else if (answers[2] == 4 || answers[2] == '4') {
                 return 1;
             } else return 4;
         } else return 1;
     } else return 1;
 };
 const RandomData = (data) => {
-    const randInd = 0
-    randInd = (Math.floor(Math.random() * 2) - 1);
+    const randInd = (Math.floor(Math.random() * 2) - 1);
     return data[randInd];
 }
 const UploadAnswers = async () => {

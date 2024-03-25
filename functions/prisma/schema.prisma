@@ -9,7 +9,7 @@ datasource db {
 
 model book_fair_event_answers {
   id              BigInt    @id(map: "book_fair_event_answers_pk") @default(autoincrement())
-  jamsai_id       Int?
+  jamsai_id       BigInt?
   answers         String?   @db.VarChar
   created_at      DateTime? @db.Timestamp(6)
   upload_s3_at    DateTime? @db.Timestamp(6)
