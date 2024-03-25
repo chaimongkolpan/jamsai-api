@@ -1,5 +1,8 @@
 {
   "projects": {
-    "default": "jamsai-api"
-  }
+    "default": "jamsai-cca07",
+    "jamsai-cca07": "jamsai-cca07"
+  },
+  "targets": {},
+  "etags": {}
 }

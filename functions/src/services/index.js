@@ -526,49 +526,54 @@ const SubmitAnswer = async (req) => {
 };
 const CalculateBenefit = (answers) => {
     if (answers && answers.length > 2) {
-        if (answers[0] == 1) {
+        if (answers[0] == 2) {
             if (answers[1] == 1) {
-                return 1;
-            } else if (answers[1] == 2) {
-                return 2;
-            } else if (answers[1] == 3) {
-                return 3;
-            } else if (answers[1] == 4) {
-                return 4;
-            } else return 1;
-        } else if (answers[0] == 2) {
-            if (answers[1] == 1) {
-                return 5;
-            } else if (answers[1] == 2) {
-                return 6;
-            } else if (answers[1] == 3) {
-                return 7;
-            } else if (answers[1] == 4) {
-                return 8;
-            } else return 1;
-        } else if (answers[0] == 3) {
-            if (answers[1] == 1) {
-                return 9;
-            } else if (answers[1] == 2) {
-                return 10;
-            } else if (answers[1] == 3) {
-                return 11;
-            } else if (answers[1] == 4) {
                 return 12;
-            } else return 1;
+            } else if (answers[1] == 2) {
+                return RandomData([10, 9]);
+            } else if (answers[1] == 3) {
+                return 13;
+            } else if (answers[1] == 4) {
+                return 11;
+            } else return 12;
         } else if (answers[0] == 4) {
             if (answers[1] == 1) {
-                return 13;
+                return 6;
             } else if (answers[1] == 2) {
+                return 7;
+            } else if (answers[1] == 3) {
+                return 8;
+            } else if (answers[1] == 4) {
+                return RandomData([6, 7]);
+            } else return 6;
+        } else if (answers[0] == 3) {
+            if (answers[1] == 1) {
                 return 14;
+            } else if (answers[1] == 2) {
+                return 15;
             } else if (answers[1] == 3) {
                 return 15;
             } else if (answers[1] == 4) {
-                return 16;
-            } else return 1;
+                return 14;
+            } else return 14;
+        } else if (answers[0] == 1) {
+            if (answers[1] == 1) {
+                return RandomData([3, 5]);
+            } else if (answers[1] == 2) {
+                return 4;
+            } else if (answers[1] == 3) {
+                return 2;
+            } else if (answers[1] == 4) {
+                return 1;
+            } else return 4;
         } else return 1;
     } else return 1;
 };
+const RandomData = (data) => {
+    const randInd = 0
+    randInd = (Math.floor(Math.random() * 2) - 1);
+    return data[randInd];
+}
 const UploadAnswers = async () => {
     try {
         const answers = await prisma.book_fair_event_answers.findMany({
