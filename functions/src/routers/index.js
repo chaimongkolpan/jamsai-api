@@ -5,7 +5,7 @@ const {
     UploadAnswerS3
 } = require("../controllers");
 const rootRoute = async (app) => {
-  app.get("/", (req, res) => { res.send(`Api is running.`) });
+  app.get("/", (req, res) => { res.send(`Api is running.New version 1.0.1`) });
   app.post("/login", Login);
   app.get("/questions", GetQuestion);
   app.post("/submit-answer", SubmitAnswer);

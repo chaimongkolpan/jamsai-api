@@ -34,7 +34,7 @@ var task = cron.schedule("50 23 * * *", async () => {
 const port = process.env.FUNCTION_PORT || 3001;
 
 app.get("/", (req, res) => {
-  res.send(`Api is running.`);
+  res.send(`Api is running.New version 1.0.1`);
 });
 app.post("/login", Login);
 app.get("/questions", GetQuestion);
