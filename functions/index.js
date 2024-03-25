@@ -4,8 +4,8 @@ const {
   GetQuestion,
   SubmitAnswer,
   UploadAnswerS3,
-} = require("../src/controllers");
-const services = require("../src/services");
+} = require("./src/controllers");
+const services = require("./src/services");
 const cron = require("node-cron");
 const express = require("express");
 const app = express();
