@@ -526,44 +526,44 @@ const SubmitAnswer = async (req) => {
 };
 const CalculateBenefit = (answers) => {
     if (answers && answers.length > 2) {
-        if (answers[0] == 2) {
-            if (answers[1] == 1) {
+        if (answers[0] == 1) {
+            if (answers[2] == 1) {
                 return 12;
-            } else if (answers[1] == 2) {
+            } else if (answers[2] == 2) {
                 return RandomData([10, 9]);
-            } else if (answers[1] == 3) {
+            } else if (answers[2] == 3) {
                 return 13;
-            } else if (answers[1] == 4) {
+            } else if (answers[2] == 4) {
                 return 11;
             } else return 12;
         } else if (answers[0] == 4) {
-            if (answers[1] == 1) {
+            if (answers[2] == 1) {
                 return 6;
-            } else if (answers[1] == 2) {
+            } else if (answers[2] == 2) {
                 return 7;
-            } else if (answers[1] == 3) {
+            } else if (answers[2] == 3) {
                 return 8;
-            } else if (answers[1] == 4) {
+            } else if (answers[2] == 4) {
                 return RandomData([6, 7]);
             } else return 6;
         } else if (answers[0] == 3) {
-            if (answers[1] == 1) {
+            if (answers[2] == 1) {
                 return 14;
-            } else if (answers[1] == 2) {
+            } else if (answers[2] == 2) {
                 return 15;
-            } else if (answers[1] == 3) {
+            } else if (answers[2] == 3) {
                 return 15;
-            } else if (answers[1] == 4) {
+            } else if (answers[2] == 4) {
                 return 14;
             } else return 14;
-        } else if (answers[0] == 1) {
-            if (answers[1] == 1) {
+        } else if (answers[0] == 2) {
+            if (answers[2] == 1) {
                 return RandomData([3, 5]);
-            } else if (answers[1] == 2) {
+            } else if (answers[2] == 2) {
                 return 4;
-            } else if (answers[1] == 3) {
+            } else if (answers[2] == 3) {
                 return 2;
-            } else if (answers[1] == 4) {
+            } else if (answers[2] == 4) {
                 return 1;
             } else return 4;
         } else return 1;
