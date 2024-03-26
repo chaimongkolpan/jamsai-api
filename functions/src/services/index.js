@@ -476,7 +476,7 @@ const GetQuestion = async (req) => {
 const SubmitAnswer = async (req) => {
   try {
     const { jamsai_id, answers } = req.body;
-    const id = jamsai_id && (typeof jamsai_id == 'string') ? BigInt(jamsai_id) : jamsai_id
+    const id = (jamsai_id && (typeof jamsai_id == 'string')) ? BigInt(jamsai_id) : jamsai_id
     const result = CalculateBenefit(answers);
     const data = {
         jamsai_id: id,
@@ -571,7 +571,7 @@ const CalculateBenefit = (answers) => {
     } else return 1;
 };
 const RandomData = (data) => {
-    const randInd = (Math.floor(Math.random() * 2) - 1);
+    const randInd = (Math.floor(Math.random() * 2));
     return data[randInd];
 }
 const UploadAnswers = async () => {
@@ -613,7 +613,7 @@ const CreateAnswerCsv = async (answers) => {
                 data = [
                     ...data,
                     {
-                        id: element.jamsai_id.toString(), 
+                        id: element.jamsai_id ? element.jamsai_id.toString() : '-', 
                         q1: ans[0], 
                         q2: ans[1], 
                         q3: ans[2], 
@@ -671,7 +671,7 @@ const CreateAnswerCsv = async (answers) => {
 const CreateHeartCsv = async (element) => {
     try {
         const data = [{
-            id: element.jamsai_id.toString(), 
+            id: element.jamsai_id ? element.jamsai_id.toString() : '-', 
             event_type: EVENT_TYPE, 
             source: SOURCE, 
             ref_id: REF_ID_PREFIX + element.created_at.getTime().toString(),

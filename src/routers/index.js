@@ -13,8 +13,9 @@ const rootRoute = async (app) => {
   app.get('/download/:id', function(req, res){
     const file = `public/Reward/Reward${req.params.id ?? 1}.webp`;
     const stream = require('fs').createReadStream(file);
-    res.header('Content-Disposition', 'attachment; filename=Reward' + req.params.id + '.jpg');
-    res.send(stream).type('image/jpeg').code(200);
+    res.header('Content-Disposition', 'attachment; filename=Reward' + req.params.id + '.webp');
+    res.header('Content-Type', 'image/webp');
+    res.send(stream).type('image/webp').code(200);
   });
 };
 async function router(fastify) {
