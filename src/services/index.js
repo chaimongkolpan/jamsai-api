@@ -483,6 +483,7 @@ const SubmitAnswer = async (req) => {
         answers: JSON.stringify(answers),
         created_at: new Date(),
     }
+    console.log('jamsai id', id)
     if (id) {
         const existAnswer = await prisma.book_fair_event_answers.findMany({
             where: {
@@ -492,11 +493,13 @@ const SubmitAnswer = async (req) => {
         await prisma.book_fair_event_answers.create({
             data: data,
         });
-        await CreateHeartCsv(data);
+        const uploadResult = await CreateHeartCsv(data);
+        console.log('upload', uploadResult)
         return {
             isSuccess: true,
             status_code: 200,
             message: "Success",
+            upload: uploadResult,
             data: {
                 reward_id: result,
                 is_earn: (existAnswer && existAnswer.length > 0)
@@ -698,18 +701,25 @@ const CreateHeartCsv = async (element) => {
                 Body: fileContent,
             };
             s3.upload(putObjectCommand, function (err, data) {
-                fs.unlink('output1.csv', (err) => {
-                    if (err) {
-                      console.error('Error deleting file:', err);
-                      return;
-                    }
-                    console.log('File deleted successfully');
-                });
                 if (err) {
-                    return err;
+                    fs.unlink('output1.csv', (ferr) => {
+                        if (ferr) {
+                            console.error('Error deleting file:', ferr);
+                            return ferr;
+                        }
+                        console.log('File deleted successfully', err);
+                        return err;
+                    });
                 }
                 if (data) {
-                    return true;
+                    fs.unlink('output1.csv', (ferr) => {
+                        if (ferr) {
+                            console.error('Error deleting file:', ferr);
+                            return ferr;
+                        }
+                        console.log('File deleted successfully', data);
+                        return data;
+                    });
                 }
             });
         })
