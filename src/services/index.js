@@ -4,6 +4,7 @@ const csv = require('csv');
 const assert = require('node:assert');
 const fs = require('fs');
 const { createObjectCsvWriter } = require('csv-writer');
+const csvjson = require('csvjson');
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
@@ -485,7 +486,6 @@ const SubmitAnswer = async (req) => {
         answers: JSON.stringify(answers),
         created_at: new Date(),
     }
-    console.log('jamsai id', id)
     if (id) {
         const existAnswer = await prisma.book_fair_event_answers.findMany({
             where: {
@@ -495,13 +495,30 @@ const SubmitAnswer = async (req) => {
         await prisma.book_fair_event_answers.create({
             data: data,
         });
-        const uploadResult = await CreateHeartCsv(data);
-        console.log('upload', uploadResult)
+        const uploadData = CreateHeartCsv(data);
+        const key = `${PATH}/kiosk_${new Date().getTime()}.csv`
+        const putObjectCommand = {
+            Bucket: BUCKET, 
+            Key: key,
+            Body: uploadData,
+            ContentType: 'text/csv',
+        };
+        const upload_result = await s3.upload(putObjectCommand, function (err, data) {
+            if (err) {
+                console.log('Upload error', err);
+                return err
+            }
+            if (data) {
+                console.log('Upload successfully', data);
+                return data;
+            }
+        }).promise();
         return {
             isSuccess: true,
             status_code: 200,
             message: "Success",
-            upload: uploadResult,
+            upload: key,
+            upload_result: upload_result,
             data: {
                 reward_id: result,
                 is_earn: (existAnswer && existAnswer.length > 0)
@@ -577,7 +594,6 @@ const CalculateBenefit = (answers) => {
 };
 const RandomData = (data) => {
     const randInd = (Math.floor(Math.random() * 2));
-    console.log('random', randInd);
     return data[randInd];
 }
 const UploadAnswers = async () => {
@@ -674,61 +690,16 @@ const CreateAnswerCsv = async (answers) => {
         return null;
     }
 };
-const CreateHeartCsv = async (element) => {
+const CreateHeartCsv = (element) => {
     try {
         const data = [{
-            id: element.jamsai_id ? element.jamsai_id.toString() : '-', 
-            event_type: EVENT_TYPE, 
-            source: SOURCE, 
-            ref_id: REF_ID_PREFIX + element.created_at.getTime().toString(),
-            timestamp: ConvertDatetimeFormat(element.created_at)
+            JAMSAI_ID: element.jamsai_id ? element.jamsai_id.toString() : '-', 
+            EVENT_TYPE: EVENT_TYPE, 
+            SOURCE: SOURCE, 
+            SOURCE_REF_ID: REF_ID_PREFIX + element.created_at.getTime().toString(),
+            CREATED_AT: ConvertDatetimeFormat(element.created_at)
         }];
-        const csvWriter = createObjectCsvWriter({
-            path: 'output1.csv',
-            header: [
-              { id: 'timestamp', title: 'CREATED_AT' },
-              { id: 'id', title: 'JAMSAI_ID' },
-              { id: 'event_type', title: 'EVENT_TYPE' },
-              { id: 'source', title: 'SOURCE' },
-              { id: 'ref_id', title: 'SOURCE_REF_ID' }
-            ]
-        });
-        csvWriter.writeRecords(data)
-        .then(() => {
-            const fileContent = fs.readFileSync('output1.csv');
-            const key = `${PATH}/kiosk_${new Date().getTime()}.csv`
-            const putObjectCommand = {
-                Bucket: BUCKET, 
-                Key: key,
-                Body: fileContent,
-            };
-            s3.upload(putObjectCommand, function (err, data) {
-                if (err) {
-                    fs.unlink('output1.csv', (ferr) => {
-                        if (ferr) {
-                            console.error('Error deleting file:', ferr);
-                            return ferr;
-                        }
-                        console.log('File deleted successfully', err);
-                        return err;
-                    });
-                }
-                if (data) {
-                    fs.unlink('output1.csv', (ferr) => {
-                        if (ferr) {
-                            console.error('Error deleting file:', ferr);
-                            return ferr;
-                        }
-                        console.log('File deleted successfully', data);
-                        return data;
-                    });
-                }
-            });
-        })
-        .catch(err => {
-            console.error('Error writing CSV file:', err);
-            return null;
-        });
+        return csvjson.toCSV(data, { headers: 'key' });
     } catch (err) {
         console.log("Error Submit answer:", err);
         return null;
