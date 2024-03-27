@@ -29,10 +29,10 @@ const SubmitAnswer = async (req, res) => {
         if (result.isSuccess) {
             res.status(result.status_code).send(result);
         } else {
-            res.status(result.status_code).send({ message: result.message });
+            res.status(result.status_code).send(result);
         } 
     } catch (error) {
-        res.status(400).send({ message: 'An error occurred while submit answer.' });
+        res.status(400).send({ message: error });
     }
 };
 const UploadAnswerS3 = async (req, res) => {
