@@ -32,6 +32,7 @@ const SubmitAnswer = async (req, res) => {
             res.status(result.status_code).send({ message: result.message });
         } 
     } catch (error) {
+        console.log("Error Submit answer:", error);
         res.status(400).send({ message: 'An error occurred while submit answer.' });
     }
 };
